@@ -1,5 +1,4 @@
 #pragma once
-
 namespace biomorph {
 
 	using namespace System;
@@ -14,13 +13,81 @@ namespace biomorph {
 	/// </summary>
 	public ref class mainForm : public System::Windows::Forms::Form
 	{
+	
+	public:
+		Graphics ^gr;
+		Bitmap ^bmap;
+		Color clr;
+	private:
+		SolidBrush ^br;
+	public:
+		int upper, lower, n, centerX, centerY;
+		PointF u, uI, v, vI;
+
 	public:
 		mainForm(void)
 		{
 			InitializeComponent();
-			//
-			//TODO: Add the constructor code here
-			//
+		}
+
+	public:
+		void drawSpider(void) {
+			if (textboxUpper->Text != "") {
+				upper = Convert::ToInt32(textboxUpper->Text) % 1111;
+				if (upper < 1) upper = 20;
+			}
+			else upper = 50;
+
+			if (textboxLower->Text != "") {
+				lower = Convert::ToInt32(textboxLower->Text) % 2222;
+				if (lower < 1) lower = 10;
+			}
+			else lower = 15;
+			
+			centerX = pictureboxFirst->Width / 2;
+			centerY = pictureboxFirst->Height / 2;
+
+			bmap = gcnew Bitmap(pictureboxFirst->Width, pictureboxFirst->Height);
+			gr = Graphics::FromImage(bmap);
+			gr->SmoothingMode = System::Drawing::Drawing2D::SmoothingMode::AntiAlias;
+
+			for (int y = -centerY; y <= centerY; y++)
+			{
+				for (int x = -centerX; x <= centerX; x++)
+				{
+					u.X = x * 0.01f;
+					u.Y = y * 0.01f;
+					v.X = u.X;
+					v.Y = u.Y;
+					n = 0;
+
+					while (((u.X * u.X + u.Y * u.Y) < lower) && (n < upper))
+					{
+						uI.X = u.X;
+						uI.Y = u.Y;
+						vI.X = v.X;
+						vI.Y = v.Y;
+						n++;
+						
+						u.X = (uI.X * uI.X) - (uI.Y * uI.Y) + v.X;
+						u.Y = (2 * uI.X * uI.Y) + v.Y;
+						v.X = (vI.X / 2) + u.X;
+						v.Y = (vI.Y / 2) + u.Y;
+						n++;
+					}
+
+					if (n < upper)
+					{
+						int g = (500 * n) % 255;
+						int b = (400 * n) % 255;
+						
+						clr = Color::FromArgb(0, g, b);
+						br = gcnew SolidBrush(clr);
+						gr->FillRectangle(br, centerX + x, centerY + y, 1, 1);
+						pictureboxFirst->BackgroundImage = bmap;
+					}
+				}
+			}
 		}
 
 	protected:
@@ -208,7 +275,7 @@ namespace biomorph {
 			this->textboxString->Size = System::Drawing::Size(80, 21);
 			this->textboxString->TabIndex = 9;
 			this->textboxString->Visible = false;
-			this->textboxString->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &mainForm::textboxString_KeyPress_1);
+			this->textboxString->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &mainForm::textboxString_KeyPress);
 			// 
 			// textboxLower
 			// 
@@ -220,6 +287,7 @@ namespace biomorph {
 			this->textboxLower->Name = L"textboxLower";
 			this->textboxLower->Size = System::Drawing::Size(80, 21);
 			this->textboxLower->TabIndex = 8;
+			this->textboxLower->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &mainForm::textboxLower_KeyPress);
 			// 
 			// textboxUpper
 			// 
@@ -231,6 +299,7 @@ namespace biomorph {
 			this->textboxUpper->Name = L"textboxUpper";
 			this->textboxUpper->Size = System::Drawing::Size(80, 21);
 			this->textboxUpper->TabIndex = 7;
+			this->textboxUpper->KeyPress += gcnew System::Windows::Forms::KeyPressEventHandler(this, &mainForm::textboxUpper_KeyPress);
 			// 
 			// labelString
 			// 
@@ -303,7 +372,7 @@ namespace biomorph {
 			this->labelSign->Name = L"labelSign";
 			this->labelSign->Size = System::Drawing::Size(76, 26);
 			this->labelSign->TabIndex = 0;
-			this->labelSign->Text = L"0.3-alfa\r\nby paul polikha";
+			this->labelSign->Text = L"0.1-beta\r\nby paul polikha";
 			this->labelSign->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			// 
 			// panelShow
@@ -328,8 +397,9 @@ namespace biomorph {
 			this->labelLoading->Location = System::Drawing::Point(162, 185);
 			this->labelLoading->Name = L"labelLoading";
 			this->labelLoading->Size = System::Drawing::Size(131, 29);
-			this->labelLoading->TabIndex = 1;
+			this->labelLoading->TabIndex = 0;
 			this->labelLoading->Text = L"processing..";
+			this->labelLoading->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			this->labelLoading->Visible = false;
 			// 
 			// pictureboxFirst
@@ -379,29 +449,25 @@ private: System::Void buttonStart_Click(System::Object^  sender, System::EventAr
 		textboxUpper->Text = "";
 		textboxString->Text = "";
 	}
-	else if (radioCell->Checked){
+	else {
+		pictureboxFirst->Visible = false;
 		labelLoading->Visible = true;
-		// do something
-		//labelLoading->Visible = false;
+
+		if (radioCell->Checked) {
+			// do something
+		}
+		else if (radioSpider->Checked) {
+			drawSpider();
+		}
+		else if (radioShip->Checked) {
+			// do something
+		}
+		else if (radioLyapunov->Checked) {
+			// do something
+		}
+
 		pictureboxFirst->Visible = true;
-	}
-	else if (radioSpider->Checked) {
-		labelLoading->Visible = true;
-		// do something
-		//labelLoading->Visible = false;
-		pictureboxFirst->Visible = true;
-	}
-	else if (radioShip->Checked) {
-		labelLoading->Visible = true;
-		// do something
-		//labelLoading->Visible = false;
-		pictureboxFirst->Visible = true;
-	}
-	else if (radioLyapunov->Checked) {
-		labelLoading->Visible = true;
-		// do something
-		//labelLoading->Visible = false;
-		pictureboxFirst->Visible = true;
+		labelLoading->Visible = false;
 	}
 }
 private: System::Void radioLyapunov_CheckedChanged(System::Object^  sender, System::EventArgs^  e) {
@@ -414,8 +480,18 @@ private: System::Void radioLyapunov_CheckedChanged(System::Object^  sender, Syst
 		textboxString->Visible = false;
 	}
 }
-private: System::Void textboxString_KeyPress_1(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) {
+private: System::Void textboxString_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) {
 	if (e->KeyChar != 65 && e->KeyChar != 66 && e->KeyChar > 31) {
+		e->Handled = true;
+	}
+}
+private: System::Void textboxUpper_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) {
+	if ((e->KeyChar < 48 || e->KeyChar > 57) && e->KeyChar > 31) {
+		e->Handled = true;
+	}
+}
+private: System::Void textboxLower_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) {
+	if ((e->KeyChar < 48 || e->KeyChar > 57) && e->KeyChar > 31) {
 		e->Handled = true;
 	}
 }
