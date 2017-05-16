@@ -119,6 +119,42 @@ namespace biomorph {
 				}
 			}
 		}
+
+		void drawShip(void) {
+			for (int y = -centerY; y <= centerY; y++)
+			{
+				for (int x = -centerX; x <= centerX; x++)
+				{
+					n = 0;
+
+					v.X = x * 0.01f - 0.2f;
+					v.Y = y * 0.01f - 0.3f;
+
+					u.X = 0.0f;
+					u.Y = 0.0f;
+
+					while (((Math::Pow(u.X, 2) + Math::Pow(u.Y, 2)) < lower) && (n < upper))
+					{
+						uI = u;
+						u.X = safe_cast<float>(Math::Pow(uI.X, 2) - Math::Pow(uI.Y, 2) + v.X);
+						u.Y = 2 * Math::Abs(uI.X * uI.Y) + v.Y;
+						n++;
+					}
+
+					if (n < upper)
+					{
+						int rg = (300 * n) % 255;
+						int b = (10 * n) % 255;
+						clr = Color::FromArgb(rg, rg, b);
+						br = gcnew SolidBrush(clr);
+
+						gr->FillRectangle(br, centerX + x, centerY + y, 1, 1);
+					}
+				}
+			}
+
+			pictureboxFirst->BackgroundImage = bmap;
+		}
 		
 	protected:
 		/// <summary>
@@ -402,7 +438,7 @@ namespace biomorph {
 			this->labelSign->Name = L"labelSign";
 			this->labelSign->Size = System::Drawing::Size(76, 26);
 			this->labelSign->TabIndex = 0;
-			this->labelSign->Text = L"0.3-beta\r\nby paul polikha";
+			this->labelSign->Text = L"0.4-beta\r\nby paul polikha";
 			this->labelSign->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			// 
 			// panelShow
@@ -500,7 +536,7 @@ private: System::Void buttonStart_Click(System::Object^  sender, System::EventAr
 			drawSpider();
 		}
 		else if (radioShip->Checked) {
-			// drawShip();
+			drawShip();
 		}
 		else if (radioLyapunov->Checked) {
 			// drawLyapunov();
