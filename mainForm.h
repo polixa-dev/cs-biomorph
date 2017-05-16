@@ -6,6 +6,7 @@ namespace biomorph {
 	using namespace System::Collections;
 	using namespace System::Windows::Forms;
 	using namespace System::Data;
+	using namespace System::Collections::Generic;
 	using namespace System::Drawing;
 
 	/// <summary>
@@ -22,6 +23,9 @@ namespace biomorph {
 	public:
 		int upper, lower, n, centerX, centerY;
 		PointF u, uI, v, vI;
+		String ^s;
+		float lmt;
+		array<float, 2> ^arra;
 			 
 	public:
 		mainForm(void)
@@ -155,6 +159,58 @@ namespace biomorph {
 
 			pictureboxFirst->BackgroundImage = bmap;
 		}
+
+		void drawLyapunov(void) {
+			for (int a = 1; a < centerX * 2; a++)
+			{
+				for (int b = 1; b < centerY * 2; b++)
+				{
+					float x = a / 125.0;
+					float y = b / 125.0;
+					float xn = 0.5;
+					float rn;
+
+					lmt = 0;
+
+					for (int i = 0; i < 1000; i++)
+					{
+						int j = i % s->Length;
+
+						if (s[j] == 'A') rn = x;
+						else rn = y;
+
+						xn = rn * xn * (1 - xn);
+						lmt += (Math::Log(Math::Abs(rn * (1 - 2 * xn))));
+					}
+
+					lmt /= 500;
+
+					if (lmt < -1000000000) lmt = -50.0;
+					if (lmt > 1000000000) lmt = 50.0;
+
+					arra[a, b] = lmt;
+				}
+			}
+
+			for (int a = 1; a < centerX * 2; a++)
+			{
+				for (int b = 1; b < centerY * 2; b++)
+				{
+					if (arra[a, b] > 0)
+					{
+						gr->FillRectangle(gcnew SolidBrush(Color::FromArgb((Math::Abs(safe_cast<int>(arra[a, b])) * 25 + 10) % 255,
+							(Math::Abs(safe_cast<int>(arra[a, b])) * 200 + 5) % 255, 0)), a, b, 1, 1);
+					}
+					else
+					{
+						gr->FillRectangle(gcnew SolidBrush(Color::FromArgb(Math::Abs(250 - ((Math::Abs(safe_cast<int>(arra[a, b]) * 20) + 30) % 255)),
+							(Math::Abs(255 - (Math::Abs(safe_cast<int>(arra[a, b]) * 5) + 200) % 255)), 0)), a, b, 1, 1);
+					}
+				}
+			}
+
+			pictureboxFirst->BackgroundImage = bmap;
+		}
 		
 	protected:
 		/// <summary>
@@ -169,9 +225,9 @@ namespace biomorph {
 		}
 	private: System::Windows::Forms::Panel^  panelLeft;
 	private: System::Windows::Forms::Panel^  panelBottom;
-	private: System::Windows::Forms::Label^  labelSign;
 	private: System::Windows::Forms::Panel^  panelShow;
-
+	private: System::Windows::Forms::Label^  labelSign;
+	
 	private: System::Windows::Forms::Button^  buttonStart;
 
 	private: System::Windows::Forms::Label^  labelString;
@@ -434,11 +490,11 @@ namespace biomorph {
 				static_cast<System::Byte>(0)));
 			this->labelSign->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(50)), static_cast<System::Int32>(static_cast<System::Byte>(58)),
 				static_cast<System::Int32>(static_cast<System::Byte>(78)));
-			this->labelSign->Location = System::Drawing::Point(50, 6);
+			this->labelSign->Location = System::Drawing::Point(34, 6);
 			this->labelSign->Name = L"labelSign";
-			this->labelSign->Size = System::Drawing::Size(76, 26);
+			this->labelSign->Size = System::Drawing::Size(110, 26);
 			this->labelSign->TabIndex = 0;
-			this->labelSign->Text = L"0.4-beta\r\nby paul polikha";
+			this->labelSign->Text = L"0.6-release_candidate\r\nby paul polikha";
 			this->labelSign->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			// 
 			// panelShow
@@ -454,9 +510,9 @@ namespace biomorph {
 			// 
 			// pictureboxFirst
 			// 
-			this->pictureboxFirst->Location = System::Drawing::Point(11, 11);
+			this->pictureboxFirst->Location = System::Drawing::Point(9, 10);
 			this->pictureboxFirst->Name = L"pictureboxFirst";
-			this->pictureboxFirst->Size = System::Drawing::Size(433, 389);
+			this->pictureboxFirst->Size = System::Drawing::Size(436, 390);
 			this->pictureboxFirst->SizeMode = System::Windows::Forms::PictureBoxSizeMode::StretchImage;
 			this->pictureboxFirst->TabIndex = 0;
 			this->pictureboxFirst->TabStop = false;
@@ -466,9 +522,9 @@ namespace biomorph {
 			// 
 			this->pictureboxSecond->BackgroundImage = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"pictureboxSecond.BackgroundImage")));
 			this->pictureboxSecond->BackgroundImageLayout = System::Windows::Forms::ImageLayout::Center;
-			this->pictureboxSecond->Location = System::Drawing::Point(11, 11);
+			this->pictureboxSecond->Location = System::Drawing::Point(9, 10);
 			this->pictureboxSecond->Name = L"pictureboxSecond";
-			this->pictureboxSecond->Size = System::Drawing::Size(433, 389);
+			this->pictureboxSecond->Size = System::Drawing::Size(436, 390);
 			this->pictureboxSecond->SizeMode = System::Windows::Forms::PictureBoxSizeMode::StretchImage;
 			this->pictureboxSecond->TabIndex = 1;
 			this->pictureboxSecond->TabStop = false;
@@ -539,7 +595,15 @@ private: System::Void buttonStart_Click(System::Object^  sender, System::EventAr
 			drawShip();
 		}
 		else if (radioLyapunov->Checked) {
-			// drawLyapunov();
+			if (textboxString->Text != "") {
+				s = textboxString->Text;
+			}
+			else s = "AB";
+
+			arra = gcnew array<float, 2>(centerX * 2, centerX * 2);
+			lmt = 0.0;
+
+			drawLyapunov();
 		}
 
 		pictureboxFirst->Visible = true;
@@ -547,12 +611,20 @@ private: System::Void buttonStart_Click(System::Object^  sender, System::EventAr
 }
 private: System::Void radioLyapunov_CheckedChanged(System::Object^  sender, System::EventArgs^  e) {
 	if (radioLyapunov->Checked) {
+		labelLower->Visible =  false;
+		textboxLower->Visible = false;
+		labelUpper->Visible = false;
+		textboxUpper->Visible = false;
 		labelString->Visible = true;
 		textboxString->Visible = true;
 	}
 	else {
 		labelString->Visible = false;
 		textboxString->Visible = false;
+		labelLower->Visible = true;
+		textboxLower->Visible = true;
+		labelUpper->Visible = true;
+		textboxUpper->Visible = true;
 	}
 }
 private: System::Void textboxString_KeyPress(System::Object^  sender, System::Windows::Forms::KeyPressEventArgs^  e) {
