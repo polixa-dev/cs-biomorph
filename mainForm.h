@@ -13,7 +13,6 @@ namespace biomorph {
 	/// </summary>
 	public ref class mainForm : public System::Windows::Forms::Form
 	{
-	
 	public:
 		Graphics ^gr;
 		Bitmap ^bmap;
@@ -23,7 +22,7 @@ namespace biomorph {
 	public:
 		int upper, lower, n, centerX, centerY;
 		PointF u, uI, v, vI;
-
+			 
 	public:
 		mainForm(void)
 		{
@@ -31,26 +30,57 @@ namespace biomorph {
 		}
 
 	public:
+		int coordinateMutation(float a, int isY)
+		{
+			if (isY == 1)
+			{
+				return safe_cast<int>(centerY - a * 150);
+			}
+			return safe_cast<int>(centerX + a * 150);
+		}
+
+		void drawCell(void) {
+			v.X = 0.5f;
+			v.Y = 0.0f;
+
+			for (float x = -2; x <= 2; x += 0.002f)
+			{
+				for (float y = -2; y <= 2; y += 0.002f)
+				{
+					u.X = x;
+					u.Y = y;
+					n = 0;
+
+					while ((Math::Abs(u.X) < lower) && (Math::Abs(u.Y) < lower) && (n < upper))
+					{
+						uI.X = u.X;
+						uI.Y = u.Y;
+						n++;
+						u.X = uI.X * uI.X * uI.X - 3 * uI.X * uI.Y * uI.Y + v.X;
+						u.Y = 3 * uI.X * uI.X * uI.Y - uI.Y * uI.Y * uI.Y + v.Y;
+					}
+
+					if ((Math::Abs(u.X) >= 300) || (Math::Abs(u.Y) >= 10000))
+					{
+						br = gcnew SolidBrush(Color::Indigo);
+						int xt = coordinateMutation(x, 0);
+						int yt = coordinateMutation(y, 1);
+						gr->FillRectangle(br, xt, yt, 1, 1);
+						pictureboxFirst->BackgroundImage = bmap;
+					}
+					else
+					{
+						br = gcnew SolidBrush(Color::Crimson);
+						int xt = coordinateMutation(x, 0);
+						int yt = coordinateMutation(y, 1);
+						gr->FillRectangle(br, xt, yt, 1, 1);
+						pictureboxFirst->BackgroundImage = bmap;
+					}
+				}
+			}
+		}
+		
 		void drawSpider(void) {
-			if (textboxUpper->Text != "") {
-				upper = Convert::ToInt32(textboxUpper->Text) % 1111;
-				if (upper < 1) upper = 20;
-			}
-			else upper = 50;
-
-			if (textboxLower->Text != "") {
-				lower = Convert::ToInt32(textboxLower->Text) % 2222;
-				if (lower < 1) lower = 10;
-			}
-			else lower = 15;
-			
-			centerX = pictureboxFirst->Width / 2;
-			centerY = pictureboxFirst->Height / 2;
-
-			bmap = gcnew Bitmap(pictureboxFirst->Width, pictureboxFirst->Height);
-			gr = Graphics::FromImage(bmap);
-			gr->SmoothingMode = System::Drawing::Drawing2D::SmoothingMode::AntiAlias;
-
 			for (int y = -centerY; y <= centerY; y++)
 			{
 				for (int x = -centerX; x <= centerX; x++)
@@ -89,7 +119,7 @@ namespace biomorph {
 				}
 			}
 		}
-
+		
 	protected:
 		/// <summary>
 		/// Clean up any resources being used.
@@ -112,10 +142,9 @@ namespace biomorph {
 	private: System::Windows::Forms::Label^  labelLower;
 	private: System::Windows::Forms::Label^  labelUpper;
 	private: System::Windows::Forms::TextBox^  textboxString;
-
 	private: System::Windows::Forms::TextBox^  textboxLower;
-
 	private: System::Windows::Forms::TextBox^  textboxUpper;
+
 	private: System::Windows::Forms::GroupBox^  groupboxSelect;
 	private: System::Windows::Forms::RadioButton^  radioLyapunov;
 	private: System::Windows::Forms::RadioButton^  radioShip;
@@ -124,8 +153,7 @@ namespace biomorph {
 	private: System::Windows::Forms::RadioButton^  radioClear;
 
 	private: System::Windows::Forms::PictureBox^  pictureboxFirst;
-	private: System::Windows::Forms::Label^  labelLoading;
-
+	private: System::Windows::Forms::PictureBox^  pictureboxSecond;
 
 	private: System::ComponentModel::IContainer^  components;
 
@@ -142,6 +170,7 @@ namespace biomorph {
 		/// </summary>
 		void InitializeComponent(void)
 		{
+			System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(mainForm::typeid));
 			this->panelLeft = (gcnew System::Windows::Forms::Panel());
 			this->groupboxSelect = (gcnew System::Windows::Forms::GroupBox());
 			this->radioLyapunov = (gcnew System::Windows::Forms::RadioButton());
@@ -159,13 +188,14 @@ namespace biomorph {
 			this->panelBottom = (gcnew System::Windows::Forms::Panel());
 			this->labelSign = (gcnew System::Windows::Forms::Label());
 			this->panelShow = (gcnew System::Windows::Forms::Panel());
-			this->labelLoading = (gcnew System::Windows::Forms::Label());
 			this->pictureboxFirst = (gcnew System::Windows::Forms::PictureBox());
+			this->pictureboxSecond = (gcnew System::Windows::Forms::PictureBox());
 			this->panelLeft->SuspendLayout();
 			this->groupboxSelect->SuspendLayout();
 			this->panelBottom->SuspendLayout();
 			this->panelShow->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureboxFirst))->BeginInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureboxSecond))->BeginInit();
 			this->SuspendLayout();
 			// 
 			// panelLeft
@@ -372,35 +402,19 @@ namespace biomorph {
 			this->labelSign->Name = L"labelSign";
 			this->labelSign->Size = System::Drawing::Size(76, 26);
 			this->labelSign->TabIndex = 0;
-			this->labelSign->Text = L"0.1-beta\r\nby paul polikha";
+			this->labelSign->Text = L"0.3-beta\r\nby paul polikha";
 			this->labelSign->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			// 
 			// panelShow
 			// 
 			this->panelShow->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(40)), static_cast<System::Int32>(static_cast<System::Byte>(46)),
 				static_cast<System::Int32>(static_cast<System::Byte>(62)));
-			this->panelShow->Controls->Add(this->labelLoading);
 			this->panelShow->Controls->Add(this->pictureboxFirst);
+			this->panelShow->Controls->Add(this->pictureboxSecond);
 			this->panelShow->Location = System::Drawing::Point(205, 25);
 			this->panelShow->Name = L"panelShow";
 			this->panelShow->Size = System::Drawing::Size(455, 410);
 			this->panelShow->TabIndex = 1;
-			// 
-			// labelLoading
-			// 
-			this->labelLoading->AutoSize = true;
-			this->labelLoading->BackColor = System::Drawing::Color::Transparent;
-			this->labelLoading->Font = (gcnew System::Drawing::Font(L"Lato Thin", 18, System::Drawing::FontStyle::Italic, System::Drawing::GraphicsUnit::Point,
-				static_cast<System::Byte>(0)));
-			this->labelLoading->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(254)), static_cast<System::Int32>(static_cast<System::Byte>(223)),
-				static_cast<System::Int32>(static_cast<System::Byte>(87)));
-			this->labelLoading->Location = System::Drawing::Point(162, 185);
-			this->labelLoading->Name = L"labelLoading";
-			this->labelLoading->Size = System::Drawing::Size(131, 29);
-			this->labelLoading->TabIndex = 0;
-			this->labelLoading->Text = L"processing..";
-			this->labelLoading->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
-			this->labelLoading->Visible = false;
 			// 
 			// pictureboxFirst
 			// 
@@ -410,6 +424,18 @@ namespace biomorph {
 			this->pictureboxFirst->SizeMode = System::Windows::Forms::PictureBoxSizeMode::StretchImage;
 			this->pictureboxFirst->TabIndex = 0;
 			this->pictureboxFirst->TabStop = false;
+			this->pictureboxFirst->Visible = false;
+			// 
+			// pictureboxSecond
+			// 
+			this->pictureboxSecond->BackgroundImage = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"pictureboxSecond.BackgroundImage")));
+			this->pictureboxSecond->BackgroundImageLayout = System::Windows::Forms::ImageLayout::Center;
+			this->pictureboxSecond->Location = System::Drawing::Point(11, 11);
+			this->pictureboxSecond->Name = L"pictureboxSecond";
+			this->pictureboxSecond->Size = System::Drawing::Size(433, 389);
+			this->pictureboxSecond->SizeMode = System::Windows::Forms::PictureBoxSizeMode::StretchImage;
+			this->pictureboxSecond->TabIndex = 1;
+			this->pictureboxSecond->TabStop = false;
 			// 
 			// mainForm
 			// 
@@ -424,10 +450,12 @@ namespace biomorph {
 				static_cast<System::Byte>(0)));
 			this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedSingle;
 			this->MaximizeBox = false;
+			this->MinimizeBox = false;
 			this->Name = L"mainForm";
 			this->ShowIcon = false;
 			this->StartPosition = System::Windows::Forms::FormStartPosition::CenterScreen;
 			this->Text = L"biomorph";
+			this->Load += gcnew System::EventHandler(this, &mainForm::mainForm_Load);
 			this->panelLeft->ResumeLayout(false);
 			this->panelLeft->PerformLayout();
 			this->groupboxSelect->ResumeLayout(false);
@@ -435,39 +463,50 @@ namespace biomorph {
 			this->panelBottom->ResumeLayout(false);
 			this->panelBottom->PerformLayout();
 			this->panelShow->ResumeLayout(false);
-			this->panelShow->PerformLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureboxFirst))->EndInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureboxSecond))->EndInit();
 			this->ResumeLayout(false);
 
 		}
 #pragma endregion
 private: System::Void buttonStart_Click(System::Object^  sender, System::EventArgs^  e) {
+	bmap = gcnew Bitmap(pictureboxFirst->Width, pictureboxFirst->Height);
+	gr = Graphics::FromImage(bmap);
+	gr->SmoothingMode = System::Drawing::Drawing2D::SmoothingMode::AntiAlias;
+	
+	if (textboxUpper->Text != "") {
+		upper = Convert::ToInt32(textboxUpper->Text) % 1111;
+		if (upper < 1) upper = 20;
+	}
+	else upper = 50;
+
+	if (textboxLower->Text != "") {
+		lower = Convert::ToInt32(textboxLower->Text) % 2222;
+		if (lower < 1) lower = 80;
+	}
+	else lower = 100;
+	
 	if (radioClear->Checked) {
 		pictureboxFirst->Visible = false;
-		labelLoading->Visible = false;
 		textboxLower->Text = "";
 		textboxUpper->Text = "";
 		textboxString->Text = "";
 	}
 	else {
-		pictureboxFirst->Visible = false;
-		labelLoading->Visible = true;
-
 		if (radioCell->Checked) {
-			// do something
+			drawCell();
 		}
 		else if (radioSpider->Checked) {
 			drawSpider();
 		}
 		else if (radioShip->Checked) {
-			// do something
+			// drawShip();
 		}
 		else if (radioLyapunov->Checked) {
-			// do something
+			// drawLyapunov();
 		}
 
 		pictureboxFirst->Visible = true;
-		labelLoading->Visible = false;
 	}
 }
 private: System::Void radioLyapunov_CheckedChanged(System::Object^  sender, System::EventArgs^  e) {
@@ -494,6 +533,10 @@ private: System::Void textboxLower_KeyPress(System::Object^  sender, System::Win
 	if ((e->KeyChar < 48 || e->KeyChar > 57) && e->KeyChar > 31) {
 		e->Handled = true;
 	}
+}
+private: System::Void mainForm_Load(System::Object^  sender, System::EventArgs^  e) {
+	centerX = pictureboxFirst->Width / 2;
+	centerY = pictureboxFirst->Height / 2;
 }
 };
 }
